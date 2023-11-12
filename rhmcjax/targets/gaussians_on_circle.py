@@ -44,13 +44,13 @@ class GaussiansOnCircle():
             standardized_samples = (samples - mean[None, :])/self.variance
             prob_vals = jsps.multivariate_normal.pdf(standardized_samples, mean=jnp.array([0,0]), cov=jnp.eye(2))
             probs.append(prob_vals)
-        probs = jnp.sum(jnp.array(probs), axis=0).squeeze()
+        probs = jnp.sum(jnp.array(probs), axis=0)
         if self.restrict_to_unit_hypercube:
             mask = check_restriction_to_unit_hypercube(samples)
             probs = jnp.where(mask, probs, 0.)
         assert len(probs) == len(samples)
 
-        return probs
+        return probs.squeeze()
     
     def log_prob(self, samples):
         return jnp.log(self.prob(samples))
