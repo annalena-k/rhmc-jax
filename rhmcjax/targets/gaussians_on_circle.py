@@ -39,6 +39,8 @@ class GaussiansOnCircle():
 
         
     def prob(self, samples):
+        if len(samples.shape) == 1:
+            samples = jnp.expand_dims(samples, axis=0)
         probs = []
         for mean in self.mean_pos:
             standardized_samples = (samples - mean[None, :])/self.variance
