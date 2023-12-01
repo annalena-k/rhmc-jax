@@ -7,54 +7,50 @@ from blackjax.mcmc.integrators import EuclideanKineticEnergy
 
 EuclideanKineticEnergyGrad = EuclideanKineticEnergy
 
-def get_indices_of_crossed_boundaries(
+def check_outside_of_boundary(
         position: chex.Array
     ) -> chex.Array:
-    """ Get indices of D-dimensional unit hypercube boundaries where position is located outside.
-        The indices with negative sign correspond to the lower boundary (at 0), while the positive indices correspond to the upper boundary (at 1).
-        The absolute value of the index indicates the dimension d \in [1,...,D].
+    """ Check whether position is within D-dimensional unit hypercube boundaries or outside.
     Input: position: Array of shape [D]
-    Output: indices: Array of variable shape
+    Output: indices: Array of shape [D], 0 if position is inside for this dimension, -1. if position < 0, +1 if position > 1.
     """
-    # TODO: Adjust for fixed shapes of index array, currently index arrays have variable length -> not possible to jit
-    ind_larger_1 = jnp.where(position>1)[0]+1
-    ind_smaller_0 = -(jnp.where(position<0)[0]+1)
-    indices = jnp.concatenate([ind_smaller_0, ind_larger_1], axis=0)
+    # TODO: Adjust for arbitrary PyTrees, currently only working for Arrays
+    ind_smaller_0 = jnp.where(position<0, -1., 0.)
+    ind_larger_1 = jnp.where(position>1, 1., 0.)
+    indices = ind_larger_1 + ind_smaller_0
 
     return indices
 
-def check_for_position_on_boundary(
+def check_position_on_boundary(
         position: chex.Array, 
-        momentum: chex.Array
-        ) -> Union[bool, chex.Array]:
+        ) -> chex.Array:
     """ Check whether positon is located directly on the boundary of the D-dimensional unit hypercube.
-    If this is the case, the momentum component perpendicular to this boundary has to be reversed.
+    If position[i]==0, inds_on_boundary = -1., if position[i]==1, inds_on_boundary = 1.
     Input: position: Array of shape [D], current position vector
-           momentum: Array of shape [D], momentum at current position
-    Output: on_boundary: bool, True if position is located on boundary
-            inds_on_boundary: Array of variable shape [B], depending on how many boundaries the positon is located
-            momentum: Array of shape [D], momentum with reversed component that is perpendicular to the boundary 
+    Output: inds_on_boundary: Array of shape [D]
     """
     # TODO: Adjust for arbitrary PyTrees, currently only working for Arrays
-    # TODO: Adjust for fixed shapes of index arrays, currently index arrays have variable length -> not possible to jit
-    ind_on_boundary_lower = -(jnp.where(position==0)[0]+1)
-    ind_on_boundary_upper = jnp.where(position==1)[0]+1
-    inds_on_boundary = jnp.concatenate([ind_on_boundary_lower, ind_on_boundary_upper], axis=0)
-    on_boundary = False
-    if inds_on_boundary.shape != (0,):
-        on_boundary = True
-        for ind in inds_on_boundary:
-            # If momentum component points outside of hypercube: revert it
-            if ind * momentum[jnp.abs(ind)-1] > 0:
-                # Revert momentum component perpendicular to boundary
-                ind = jnp.abs(ind)-1
-                p_perp = jnp.zeros_like(momentum).at[ind].set(momentum[ind])
-                p_parallel = momentum.at[ind].set(0)
-                p_perp *= (-1)
-                momentum = p_parallel + p_perp
+    ind_on_boundary_0 = jnp.where(position==0, -1., 0.)
+    ind_on_boundary_1 = jnp.where(position==1, 1., 0.)
+    inds_on_boundary = ind_on_boundary_0 + ind_on_boundary_1
 
-    return on_boundary, inds_on_boundary, momentum
+    return inds_on_boundary
 
+def revert_momentum_for_boundary_positions(
+        on_boundary: chex.Array, 
+        momentum: chex.Array
+        ) -> chex.Array:
+    """If position is located exactly on the boundary (at 0. or 1.) and the momentum points outside of the unit hypercube,
+       revert momentum component perpendicular to the boundary.
+    Input: on_boundary: Array of shape [D], output of function check_position_on_boundary
+           momentum: Array of shape [D], momentum associated with position
+    Output: momentum: Array of shape [D], modified momentum array
+    """
+    assert on_boundary.shape == momentum.shape
+
+    momentum = jnp.where(on_boundary * momentum > 0, -momentum, momentum)
+
+    return momentum
 
 def reflection_necessary(
         position: chex.Array, 
@@ -74,7 +70,8 @@ def reflection_necessary(
     Returns: bool: True if next step starting at q along momentum vector p will intersect boundary of unit hypercube
                    False otherwise
     """
-    boundary, inds_on_boundary, momentum = check_for_position_on_boundary(position, momentum)
+    on_boundary = check_position_on_boundary(position)
+    momentum = revert_momentum_for_boundary_positions(on_boundary, momentum)
 
     # Go step
     kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -85,18 +82,10 @@ def reflection_necessary(
     )
     
     # Determine indices of boundaries that were crossed
-    inds = get_indices_of_crossed_boundaries(position)
-    # Check if crossed boundaries are different from current boundary position
-    if boundary:
-        # Remove boundary indices of current position
-        i_keep = jnp.where(inds!=inds_on_boundary)
-        inds = inds[i_keep]
+    outside_of_boundary = check_outside_of_boundary(position)
     
     # Determine whether boundary was crossed and reflection is necessary
-    if inds.shape == (0,):
-        refl_necessary = False
-    else:
-        refl_necessary = True
+    refl_necessary = jnp.where(jnp.sum(jnp.abs(outside_of_boundary))>0, True, False)
     
     return refl_necessary
     
@@ -123,7 +112,8 @@ def find_next_intersection(
                                 value indicates axis that is perpendicular to the reflection surface
     """
     dim = len(position)
-    boundary, inds_on_boundary, momentum = check_for_position_on_boundary(position, momentum)
+    on_boundary = check_position_on_boundary(position)
+    momentum = revert_momentum_for_boundary_positions(on_boundary, momentum)
 
     # Go step
     kinetic_grad = kinetic_energy_grad_fn(momentum)
@@ -134,37 +124,42 @@ def find_next_intersection(
     )
 
     # Determine indices of boundaries that were crossed
-    inds = get_indices_of_crossed_boundaries(position_new)
-    if boundary:
-        # Remove boundaries where q is located at the moment
-        i_keep = jnp.where(inds!=inds_on_boundary)
-        inds = inds[i_keep]
+    outside_of_boundary = check_outside_of_boundary(position_new)
     
     # Calculate distances to boundary intersection points
-    dist_to_intersections = jnp.zeros(inds.shape)
-    for i, ind in enumerate(inds):
-        # Construct hyperplane
-        hyper_plane = jnp.identity(dim)
-        hyper_plane = jnp.delete(hyper_plane, jnp.abs(ind)-1, axis=1)
-        if ind < 0:
-            plane_offset = jnp.zeros([dim])
-        else:
-            plane_offset = jnp.zeros([dim])
-            plane_offset = plane_offset.at[jnp.abs(ind)-1].set(1)
+    # Construct hyperplanes
+    hyper_plane = jnp.identity(dim)
+    hyper_planes = jnp.array([jnp.delete(hyper_plane, i, axis=1) for i in range(dim)])
+    def body_fn(i, dist_to_intersections):
+        ind = outside_of_boundary[i]
+        hyper_plane = hyper_planes[i]
+        plane_offset = jnp.where(ind>0, 1., 0.)
         # Construct elements of linear equation
         y = position - plane_offset
         A = jnp.concatenate([jnp.expand_dims(position - position_new, 1), hyper_plane], axis=1)
         # Solve linear equation y = Ax
         params = jnp.linalg.solve(a=A, b=y)
-        dist_to_intersections = dist_to_intersections.at[i].set(params[0])
-    # Remove distances of 0
-    if boundary:
-        inds_non0 = jnp.nonzero(dist_to_intersections)
-        dist_to_intersections = dist_to_intersections[inds_non0]
+        mask_params = jnp.where(ind!=0, params[0], 0)
+        dist_to_intersections = dist_to_intersections.at[i].set(mask_params)
+
+        return dist_to_intersections
+
+    dist_to_intersections = jax.lax.fori_loop(0, dim, body_fn, jnp.zeros(outside_of_boundary.shape))
     
     # Find first intersection
-    lambda_min = jnp.min(dist_to_intersections)
-    ind_min = jnp.where(dist_to_intersections==lambda_min)[0][0]
+    mask_outside_boundary = jnp.where(outside_of_boundary!=0, True, False)
+    # If position_new is not outside the boundary, position is located on boundary
+    # -> lambda_min = remaining step
+    reflection_remaining = jnp.sum(mask_outside_boundary, dtype=bool)
+    # If there are no reflections remaining, we have to modify the mask, because the jnp.min will throw an error otherwise.
+    mask_outside_boundary = jnp.where(reflection_remaining, mask_outside_boundary, True)
+    masked_dists = jnp.where(mask_outside_boundary, dist_to_intersections, jnp.inf)
+    lambda_min = jnp.where(reflection_remaining, jnp.min(masked_dists), 1.)
+
+    ind_min = jnp.where(dist_to_intersections==lambda_min, 1., 0.)
+    ind_refl_boundary = jnp.where(reflection_remaining, jnp.argmax(ind_min), jnp.argmax(on_boundary))
+
+    # Update position and distance t
     x = jax.tree_util.tree_map(
         lambda position, position_new: position + a2 * step_size * lambda_min * (position_new - position),
         position,
@@ -173,9 +168,8 @@ def find_next_intersection(
     t_x = jax.tree_util.tree_map(
         lambda position, x, momentum: jnp.linalg.norm(x - position)/(step_size * jnp.linalg.norm(momentum)),
         position,
-        x, # Do I need to include x here?
+        x,
         momentum
     )
-    ind_refl_boundary = jnp.abs(inds[ind_min])-1
 
     return x, momentum, t_x, ind_refl_boundary
