@@ -25,7 +25,7 @@ def reflection_velocity_verlet(
     def one_step(state: IntegratorState, step_size: float) -> IntegratorState:
         position, momentum, logdensity_grad = state.position, state.momentum, state.logdensity_grad
 
-        # Half-step evolution of momentum (stays the same)
+        # Half-step evolution of momentum
         momentum = jax.tree_util.tree_map(
             lambda momentum, logdensity_grad: momentum
             + b1 * step_size * logdensity_grad,
@@ -57,7 +57,7 @@ def reflection_velocity_verlet(
             kinetic_grad,
         )
 
-        # Half-step evolution of momentum (stays the same)
+        # Half-step evolution of momentum
         logdensity, logdensity_grad = logdensity_and_grad_fn(position)
         momentum = jax.tree_util.tree_map(
             lambda momentum, logdensity_grad: momentum

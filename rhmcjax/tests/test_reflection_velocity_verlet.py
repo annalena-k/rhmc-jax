@@ -1,12 +1,13 @@
 import jax.numpy as jnp
 
 import blackjax.mcmc.metrics as metrics
+from blackjax.mcmc.hmc import init
 from blackjax.mcmc.integrators import IntegratorState
 
-from rhmcjax.rhmc.rhmc import init, reflection_velocity_verlet
+from rhmcjax.rhmc.rhmc import reflection_velocity_verlet
 from rhmcjax.targets.gaussians_on_circle import GaussiansOnCircle
 
-def test_reflection_velocity_verlet():
+def test_reflection_velocity_verlet_2d():
     constrained_target = GaussiansOnCircle(restrict_to_unit_hypercube=True)
     log_density_fn = constrained_target.log_prob
     inverse_mass_matrix = jnp.array([0.5, 0.01])
