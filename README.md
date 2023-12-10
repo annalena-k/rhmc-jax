@@ -25,7 +25,7 @@ Now, we enter the new repository
 ```
 cd rhmc-jax
 ```
-to install the package in editable mode using
+and install the package in editable mode using
 
 ```
 pip install -e .
@@ -37,7 +37,7 @@ pip install -r requirements.txt
 ```
 
 ## Usage
-Since `rhmc-jax` extends the HMC implementation of [`blackjax``](https://blackjax-devs.github.io/blackjax/) to RHMC, its usage is equivalent to `blackjax` and the original [documentation](https://blackjax.readthedocs.io/en/latest/) might be helpful.
+Since `rhmc-jax` extends the HMC implementation of [`blackjax`](https://blackjax-devs.github.io/blackjax/) to RHMC, its usage is equivalent to `blackjax` and the original [documentation](https://blackjax.readthedocs.io/en/latest/) might be helpful.
 To illustrate the use of `rhmc-jax`, several examples are provided which will be introduced in the following.
 
 ## Examples
@@ -45,9 +45,9 @@ The `/examples/` directory contains several use cases of `blackjax` and `rhmc-ja
 
 - The notebook `hmc_2d_gaussians.ipynb` introduces the standard distribution of Gaussians located on a circle and shows how HMC is performed with `blackjax`.
 - The noteook `rhmc_2d_gaussians.ipynb` illustrates how the acceptance rate of HMC decreases if this distribution is restricted to the unit square. This motivates the use of RHMC and a direct comparison shows that including reflection improves the acceptance rate to approximately 99 %. ![til](./images/rhmc.gif)
-- The file `reflection_algorithm_in_detail.pynb` shines light on the details of the reflection algorithm employed in this package. It includes code for visualizing subsequent reflections at the boundary of the unit square.
+- The file `reflection_algorithm_in_detail.pynb` introduces and visualizes details of the reflection algorithm employed in this package. It includes code for visualizing subsequent reflections at the boundary of the unit square.
 ![til](./images/reflection.gif)
 
-Since employing RHMC is motivated by the use case of HEP matrix elements, we showcase RHMC with a complex HEP distributions:
+Since employing RHMC is motivated by the use case of HEP matrix elements, we showcase RHMC with a complex HEP distribution:
 - The 3-body decay $\Lambda_c^+ \rightarrow pK^- \pi^+$ is based on [this publication](https://doi.org/10.1007/JHEP07(2023)228) and the implementation depends on the publicly available [code](https://doi.org/10.5281/zenodo.7544989). The matrix element is defined on the 2D phasespace and can be visualized in a Dalitz plot. It has a complex structure resulting from multiple resonances in the different decay channels and their interference. The notebook `rhmc_2d_Lc2pKpi.ipynb` shows how the Dalitz plot can be transformed to the unit square and provides RHMC results for this challenging distribution.
-![alt text](./images/Lc2pKpi.png)
+![alt text](https://github.com/annalena-k/rhmc-jax/blob/main/images/Lc2pKpi.png)
