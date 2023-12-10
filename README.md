@@ -56,17 +56,17 @@ num_samples_per_chain = 1_000
 step_size = 1e-3
 logdensity_fn = target.log_prob
 key = jax.random.PRNGKey(1)
+
 # Define a function to run RHMC
 def run_rhmc(key, kernel, initial_state, num_samples):
     @jax.jit
     def one_step(state, key):
         state, info = kernel(key, state)
         return state, (state, info)
-
     keys = jax.random.split(key, num_samples)
     final_state, (states, info) = jax.lax.scan(one_step, initial_state, keys)
-
     return states, info
+
 # Initialize RHMC
 key, subkey = jax.random.split(key)
 initial_positions = jax.random.uniform(subkey, shape=[num_chains, dim])
@@ -84,12 +84,13 @@ mcmc_chains = jnp.vstack(chains)
 To illustrate the use of `rhmc-jax`, several examples are provided which will be introduced in the following.
 
 ## Examples
-The [`/examples/`](https://github.com/annalena-k/rhmc-jax/tree/main/examples) directory contains several use cases of `blackjax` and `rhmc-jax`.
+The [`examples/`](https://github.com/annalena-k/rhmc-jax/tree/main/examples) directory contains several use cases of `blackjax` and `rhmc-jax`.
 
 - The notebook [`hmc_2d_gaussians.ipynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/hmc_2d_gaussians.ipynb) introduces the standard distribution of Gaussians located on a circle and shows how HMC is performed with `blackjax`.
 - The noteook [`rhmc_2d_gaussians.ipynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/rhmc_2d_gaussians.ipynb) illustrates how the acceptance rate of HMC decreases if this distribution is restricted to the unit square. This motivates the use of RHMC and a direct comparison shows that including reflection improves the acceptance rate to approximately 99 %. 
 ![til](./images/rhmc.gif)
 - The file [`reflection_algorithm_in_detail.pynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/reflection_algorithm_in_detail.ipynb) introduces and visualizes details of the reflection algorithm employed in this package. It includes code for visualizing subsequent reflections at the boundary of the unit square.
+
 ![til](./images/reflection.gif)
 
 Since employing RHMC is motivated by the use case of HEP matrix elements, we showcase RHMC with a complex HEP distribution:
