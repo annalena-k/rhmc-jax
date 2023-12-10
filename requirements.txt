@@ -1,2 +1,9 @@
+numpy
+matplotlib
+jupyter
+sympy
+tensorwaves
 jax
+chex
 blackjax
+madjax
