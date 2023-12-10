@@ -39,7 +39,7 @@ pip install -r requirements.txt
 ## Usage
 Since `rhmc-jax` extends the HMC implementation of [`blackjax`](https://blackjax-devs.github.io/blackjax/) to RHMC, its usage is equivalent to `blackjax` and the original [`blackjax` documentation](https://blackjax.readthedocs.io/en/latest/) might be helpful.
 ### Minimal `RHMC` example
-```
+```python
 import jax
 import jax.numpy as jnp
 from rhmcjax.rhmc.rhmc import rhmc
@@ -89,9 +89,7 @@ The [`/examples/`](https://github.com/annalena-k/rhmc-jax/tree/main/examples) di
 - The notebook [`hmc_2d_gaussians.ipynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/hmc_2d_gaussians.ipynb) introduces the standard distribution of Gaussians located on a circle and shows how HMC is performed with `blackjax`.
 - The noteook [`rhmc_2d_gaussians.ipynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/rhmc_2d_gaussians.ipynb) illustrates how the acceptance rate of HMC decreases if this distribution is restricted to the unit square. This motivates the use of RHMC and a direct comparison shows that including reflection improves the acceptance rate to approximately 99 %. 
 ![til](./images/rhmc.gif)
-
 - The file [`reflection_algorithm_in_detail.pynb`](https://github.com/annalena-k/rhmc-jax/blob/main/examples/reflection_algorithm_in_detail.ipynb) introduces and visualizes details of the reflection algorithm employed in this package. It includes code for visualizing subsequent reflections at the boundary of the unit square.
-
 ![til](./images/reflection.gif)
 
 Since employing RHMC is motivated by the use case of HEP matrix elements, we showcase RHMC with a complex HEP distribution:
