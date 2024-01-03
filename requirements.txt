@@ -1,5 +1,7 @@
 numpy
 matplotlib
+corner
+pickle
 jupyter
 sympy
 tensorwaves
