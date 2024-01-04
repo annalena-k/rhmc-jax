@@ -30,11 +30,7 @@ and install the package in editable mode using
 ```
 pip install -e .
 ```
-This will automatically install all dependenies listed in `requirements.txt`.
-If you want to install the requirements separately, use
-```
-pip install -r requirements.txt
-```
+This will automatically install all dependenies listed in `pyproject.toml`.
 
 ## Usage
 Since `rhmc-jax` extends the HMC implementation of [`blackjax`](https://blackjax-devs.github.io/blackjax/) to RHMC, its usage is equivalent to `blackjax` and the original [`blackjax` documentation](https://blackjax.readthedocs.io/en/latest/) might be helpful.

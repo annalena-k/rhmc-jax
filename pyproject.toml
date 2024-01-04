@@ -1,0 +1,60 @@
+[build-system]
+requires = ["setuptools>=62.0", "setuptools_scm[toml]>=6.2"]
+build-backend = "setuptools.build_meta"
+
+
+[project]
+name = "rhmc-jax"
+authors = [ 
+    {name = "Annalena Kofler", email = "annalena.kofler1@gmail.com"},
+]
+description = "Reflection Hamiltonian Monte Carlo in JAX"
+license = {text = "MIT"}
+readme = "README.md"
+requires-python = ">=3.8"
+dynamic = ["version"]
+
+
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent"
+]
+
+
+dependencies = [
+    "blackjax",
+    "chex",
+    "corner",
+    "jax",
+    "jupyter",
+    "madjax",
+    "matplotlib",
+    "numpy",
+    "sympy",
+    "tensorwaves",
+]
+
+
+[tool.setuptools.packages.find]
+include = ["rhmcjax*"]
+namespaces = false
+
+
+[tool.setuptools_scm]
+write_to = "rhmcjax/_version.py"
+
+
+[project.urls]
+homepage = "https://github.com/annalena-k/rhmc-jax"
+
+
+[project.optional-dependencies]
+dev = [
+    "black",
+    "pylint",
+    "pytest",
+]
