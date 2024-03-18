@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 
 [project]
-name = "rhmc-jax"
+name = "rhmcjax"
 authors = [ 
     {name = "Annalena Kofler", email = "annalena.kofler1@gmail.com"},
 ]
@@ -20,13 +20,14 @@ classifiers = [
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent"
 ]
 
 
 dependencies = [
-    "blackjax",
+    "blackjax-nightly==0.9.6.post153",
     "chex",
     "corner",
     "jax",
@@ -34,6 +35,7 @@ dependencies = [
     "madjax",
     "matplotlib",
     "numpy",
+    "pylhe",
     "sympy",
     "tensorwaves",
 ]
@@ -41,7 +43,6 @@ dependencies = [
 
 [tool.setuptools.packages.find]
 include = ["rhmcjax*"]
-namespaces = false
 
 
 [tool.setuptools_scm]
